@@ -1,0 +1,40 @@
+version: '3'
+
+services:
+  ecommerce:
+    build: .
+    container_name: ecommerce
+    command: python manage.py runserver 0.0.0.0:8000
+    ports:
+      - 8000:8000
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+  db:
+    image: postgres:15-alpine
+    container_name: db
+    environment:
+      - POSTGRES_DB=ecommerce
+      - POSTGRES_USER=ibodullo
+      - POSTGRES_PASSWORD=qwer123#
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    container_name: redis
+    restart: unless-stopped
+
+  celery:
+    build: .
+    command: celery -A project.celery worker -l INFO
+    restart: unless-stopped
+    depends_on:
+      - ecommerce
+      - redis
+
+volumes:
+  pgdata:
